@@ -1,7 +1,7 @@
 from collections import namedtuple
 from typing import NoReturn, List
 from prettytable import PrettyTable
-from ivan_finalized import LanguageDetector
+from language_detection import LanguageDetector
 import time
 
 TestCaseData = namedtuple(

@@ -1,4 +1,4 @@
-import time
+import re
 from typing import NoReturn, List
 from prettytable import PrettyTable
 
@@ -6031,10 +6031,16 @@ class LanguageDetector:
         Detects in which language the sentence is written
         :param sentence_to_detect_language: sentence in the unidentified language to be detected
         :type sentence_to_detect_language: str
-        :return: NoReturn
+        :return: NoReturn (???)
         """
+        words = cls._turn_sentence_into_list_of_words(sentence_to_detect_language)
+        count_list_of_words = len(words) # get count of words in dict
+        print(f'Words:\n{words}')
+        print(f'Count of words: {count_list_of_words}' )
+        matches = cls._find_matches_with_language(words)
+        results = cls._evaluate_match_percentage_with_language(count_list_of_words, matches)
+        return results
 
-        pass
 
     @staticmethod
     def _turn_sentence_into_list_of_words(sentence_in_unidentified_language: str) -> List[str]:
@@ -6044,7 +6050,13 @@ class LanguageDetector:
         :type sentence_in_unidentified_language: str
         :return: List[str]
         """
-        pass
+        print(f'Base sentence:\n{sentence_in_unidentified_language}')
+        prepared_sentence = re.sub('[!?.:;,0-9+]', '', sentence_in_unidentified_language).strip() # remove unnecessary symbols from sentence
+        final_sentence = re.sub(' +', ' ', prepared_sentence) # remove whitespaces
+        print(f'Final sentence:\n{final_sentence}')
+        return final_sentence.split(' ')
+
+
 
     @classmethod
     def _find_matches_with_language(cls, sentence_as_list: List[str]) -> dict:
@@ -6054,13 +6066,16 @@ class LanguageDetector:
         :type sentence_as_list: List[str]
         :return dict
         """
-        pass
-
+        matches = {}
+        for language in cls.languages:
+            count = cls._count_matches_for_language(sentence_as_list, cls.languages[language], language)
+            matches[language] = count
+        return matches
 
 
     @staticmethod
     def _count_matches_for_language(
-        sentence_as_list: List[str], list_of_words_in_specific_language: List[str]) -> int:
+        sentence_as_list: List[str], list_of_words_in_specific_language: List[str], language: str) -> int:
         """
         Counts matched words with every language
         :param sentence_as_list: list of words in the unidentified language
@@ -6069,7 +6084,26 @@ class LanguageDetector:
         :type list_of_words_in_specific_language: List[str]
         :return int
         """
-        pass
+        count = 0
+
+        word_table = PrettyTable() # table to display matches per language
+        word_table.field_names = ['Word', 'modification']
+
+        for word in sentence_as_list:
+            """
+            check if word(word.capitalize/word.lower) in language`s list of words
+            """
+            if word in list_of_words_in_specific_language:
+                word_table.add_row([word, ' - '])
+                count += 1
+            elif word.capitalize() in list_of_words_in_specific_language:
+                word_table.add_row([word, 'capitalized'])
+                count += 1
+            elif word.lower() in list_of_words_in_specific_language:
+                word_table.add_row([word, 'lowercased'])
+                count += 1
+        print(f'\nMatches for {language}:\n\n{word_table}')
+        return count
 
 
 
@@ -6083,7 +6117,24 @@ class LanguageDetector:
         :type dict_of_languages_with_counted_matching_words: dict
         :return dict
         """
-        pass
+        table = PrettyTable()
+        table.field_names = ['Language', 'percent', 'matches'] # table with results
+
+        percentage = {}
+        for language in dict_of_languages_with_counted_matching_words:
+            percent = int(dict_of_languages_with_counted_matching_words[language] / count_list_of_words * 100)
+
+            table.add_row([language, f'{percent}%', int(dict_of_languages_with_counted_matching_words[language])])
+
+            if percent >= 30:
+                percentage[language] = percent
+        print(f'\n Results:\n\n{table}\n')
+        return percentage
 
 
-print(LanguageDetector.sentence_to_detect_language("Manon ont très faim et la pendule du salon sonne"))
+'''
+this is a sentence for a test case, that failed, script find a 48% pf match with German but in test case correct_percentage=36. 
+'''
+print(LanguageDetector.sentence_to_detect_language("Ich komme aus Österreich und lebe seit drei Jahren in Deutschland. Ich bin 15 Jahre alt und habe zwei Geschwister: Meine Schwester ist 13 Jahre alt, mein Bruder ist 18 Jahre alt. Wir wohnen mit unseren Eltern in einem Haus in der Nähe von München. Meine Mutter ist Köchin, mein Vater arbeitet in einer Bank."))
+
+# print(LanguageDetector.sentence_to_detect_language("Manon ont très faim et la pendule du salon sonne"))
